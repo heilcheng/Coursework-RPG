@@ -127,12 +127,44 @@ const App: React.FC = () => {
   };
 
   const toggleQuestCompletion = (questId: string) => {
-    setGameState(prev => ({
-      ...prev,
-      quests: prev.quests.map(q => 
+    setGameState(prev => {
+      const quest = prev.quests.find(q => q.id === questId);
+      if (!quest) return prev;
+
+      const newQuests = prev.quests.map(q => 
         q.id === questId ? { ...q, completed: !q.completed } : q
-      )
-    }));
+      );
+
+      const expGain = quest.completed ? -quest.reward : quest.reward; // Subtract exp if uncompleting
+      const newPlayerExp = Math.max(0, prev.player.exp + expGain);
+      const newPlayerLevel = Math.floor(newPlayerExp / 100) + 1;
+
+      const course = prev.courses.find(c => c.id === quest.courseId);
+      if (course) {
+        const skillExpGain = quest.completed ? -Math.round(quest.reward * 0.1) : Math.round(quest.reward * 0.1);
+        const newSkillExp = Math.max(0, course.relatedSkill.exp + skillExpGain);
+        const newSkillLevel = Math.floor(newSkillExp / 50) + 1;
+
+        const newCourses = prev.courses.map(c => 
+          c.id === course.id 
+            ? { ...c, relatedSkill: { ...c.relatedSkill, exp: newSkillExp, level: newSkillLevel } }
+            : c
+        );
+
+        return {
+          ...prev,
+          player: { ...prev.player, exp: newPlayerExp, level: newPlayerLevel },
+          courses: newCourses,
+          quests: newQuests
+        };
+      }
+
+      return {
+        ...prev,
+        player: { ...prev.player, exp: newPlayerExp, level: newPlayerLevel },
+        quests: newQuests
+      };
+    });
   };
 
   const deleteQuest = (questId: string) => {
@@ -178,7 +210,7 @@ const App: React.FC = () => {
         courses: [
           ...prev.courses,
           {
-            id: prev.courses.length + 1,
+            id: Math.max(0, ...prev.courses.map(c => c.id)) + 1, // Ensure unique ID
             name: newCourse.name,
             relatedSkill: {
               name: newCourse.skillName,
@@ -368,7 +400,7 @@ const App: React.FC = () => {
             </Grid>
           </Grid>
         </CardContent>
-      </Card>
+        </Card>
 
       <Grid container spacing={2}>
         {gameState.courses.map(course => {
@@ -392,7 +424,7 @@ const App: React.FC = () => {
                 <CardContent>
                   <LinearProgress 
                     variant="determinate" 
-                    value={(progress.current / progress.total) * 100} 
+                    value={progress.total > 0 ? (progress.current / progress.total) * 100 : 0} 
                     sx={{ marginBottom: 1 }} 
                   />
                   <Typography>Progress: {progress.current} / {progress.total}</Typography>
