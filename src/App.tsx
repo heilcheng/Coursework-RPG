@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardActions, Typography, LinearProgress, Button, TextField, Select, MenuItem, Grid } from '@mui/material';
-import { Book, Star, FileText, PenTool, GraduationCap, Calculator, BarChart, Coffee, Save, Download } from 'lucide-react';
+import { 
+  Card, CardContent, CardHeader, CardActions, Typography, 
+  LinearProgress, Button, TextField, Select, MenuItem, Grid, 
+  IconButton
+} from '@mui/material';
+import { 
+  Book, Star, FileText, PenTool, GraduationCap, Calculator, 
+  BarChart, Coffee, Save, Download, Delete
+} from 'lucide-react';
 
 interface Skill {
   name: string;
@@ -13,9 +20,7 @@ interface Skill {
 interface Course {
   id: number;
   name: string;
-  progress: number;
-  totalTasks: number;
-  relatedSkill: string;
+  relatedSkill: Skill;
 }
 
 interface Quest {
@@ -37,7 +42,6 @@ interface GameState {
     level: number;
     exp: number;
     careerGoal: string;
-    skills: { [key: string]: Skill };
   };
   courses: Course[];
   quests: Quest[];
@@ -49,15 +53,15 @@ const QuestTypes: { [key: string]: { name: string; icon: string; baseReward: num
   FINAL: { name: 'Final Exam', icon: 'GraduationCap', baseReward: 300 }
 };
 
-const initialSkills: { [key: string]: Skill } = {
-  DISCRETE_MATH: { name: 'Discrete Math', icon: 'Calculator', effect: 'Enhances problem-solving in MA2509', level: 1, exp: 0 },
-  STAT_PROB: { name: 'Statistics & Probability', icon: 'BarChart', effect: 'Improves data analysis in MA2510', level: 1, exp: 0 },
-  JAVA_PROGRAMMING: { name: 'Java Programming', icon: 'Coffee', effect: 'Boosts coding efficiency in CS2360', level: 1, exp: 0 }
-};
-
 const iconMap: { [key: string]: React.ElementType } = {
   Calculator, BarChart, Coffee, FileText, PenTool, GraduationCap, Star, Book
 };
+
+const initialCourses: Course[] = [
+  { id: 1, name: "MA2509", relatedSkill: { name: 'Discrete Math', icon: 'Calculator', effect: 'Enhances problem-solving in MA2509', level: 1, exp: 0 } },
+  { id: 2, name: "MA2510", relatedSkill: { name: 'Statistics & Probability', icon: 'BarChart', effect: 'Improves data analysis in MA2510', level: 1, exp: 0 } },
+  { id: 3, name: "CS2360", relatedSkill: { name: 'Java Programming', icon: 'Coffee', effect: 'Boosts coding efficiency in CS2360', level: 1, exp: 0 } }
+];
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -71,20 +75,14 @@ const App: React.FC = () => {
         level: 1,
         exp: 0,
         careerGoal: "",
-        skills: initialSkills
       },
-      courses: [
-        { id: 1, name: "MA2509", progress: 0, totalTasks: 10, relatedSkill: 'DISCRETE_MATH' },
-        { id: 2, name: "MA2510", progress: 0, totalTasks: 8, relatedSkill: 'STAT_PROB' },
-        { id: 3, name: "CS2360", progress: 0, totalTasks: 12, relatedSkill: 'JAVA_PROGRAMMING' }
-      ],
+      courses: initialCourses,
       quests: []
     };
   });
 
   const [newQuest, setNewQuest] = useState({ name: '', courseId: '', type: '' });
-  const [newSkill, setNewSkill] = useState({ name: '', effect: '' });
-  const [newCourse, setNewCourse] = useState({ name: '', totalTasks: '', relatedSkill: '' });
+  const [newCourse, setNewCourse] = useState({ name: '', skillName: '', skillIcon: '' });
 
   useEffect(() => {
     localStorage.setItem('courseRPGState', JSON.stringify(gameState));
@@ -122,41 +120,39 @@ const App: React.FC = () => {
     }
   }, [gameState.courses, gameState.quests.length]);
 
-  const completeQuest = (questId: string) => {
-    setGameState(prev => {
-      const quest = prev.quests.find(q => q.id === questId);
-      if (quest && !quest.completed) {
-        const expGain = quest.reward;
-        const course = prev.courses.find(c => c.id === quest.courseId);
-        
-        const newPlayer = { ...prev.player };
-        newPlayer.exp += expGain;
-        newPlayer.level = Math.floor(newPlayer.exp / 100) + 1;
-        
-        Object.keys(newPlayer.skills).forEach(skillKey => {
-          const skillExpGain = skillKey === course?.relatedSkill ? Math.round(expGain * 0.5) : Math.round(expGain * 0.1);
-          const skill = newPlayer.skills[skillKey];
-          skill.exp += skillExpGain;
-          skill.level = Math.floor(skill.exp / 50) + 1;
-        });
+  const calculateProgress = (course: Course, quests: Quest[]) => {
+    const courseQuests = quests.filter(q => q.courseId === course.id);
+    const completedQuests = courseQuests.filter(q => q.completed).length;
+    return { current: completedQuests, total: courseQuests.length };
+  };
 
-        const newCourses = prev.courses.map(c => 
-          c.id === quest.courseId ? { ...c, progress: c.progress + 1 } : c
-        );
+  const toggleQuestCompletion = (questId: string) => {
+    setGameState(prev => ({
+      ...prev,
+      quests: prev.quests.map(q => 
+        q.id === questId ? { ...q, completed: !q.completed } : q
+      )
+    }));
+  };
 
-        const newQuests = prev.quests.map(q => 
-          q.id === questId ? { ...q, completed: true } : q
-        );
+  const deleteQuest = (questId: string) => {
+    setGameState(prev => ({
+      ...prev,
+      quests: prev.quests.filter(q => q.id !== questId)
+    }));
+  };
 
-        return { ...prev, player: newPlayer, courses: newCourses, quests: newQuests };
-      }
-      return prev;
-    });
+  const deleteCourse = (courseId: number) => {
+    setGameState(prev => ({
+      ...prev,
+      courses: prev.courses.filter(c => c.id !== courseId),
+      quests: prev.quests.filter(q => q.courseId !== courseId)
+    }));
   };
 
   const addNewQuest = () => {
     if (newQuest.name && newQuest.courseId && newQuest.type) {
-      const questType = QuestTypes[newQuest.type];
+      const questType = QuestTypes[newQuest.type as keyof typeof QuestTypes];
       setGameState(prev => ({
         ...prev,
         quests: [
@@ -175,25 +171,8 @@ const App: React.FC = () => {
     }
   };
 
-  const addNewSkill = () => {
-    if (newSkill.name && newSkill.effect) {
-      const skillKey = newSkill.name.toUpperCase().replace(/\s+/g, '_');
-      setGameState(prev => ({
-        ...prev,
-        player: {
-          ...prev.player,
-          skills: {
-            ...prev.player.skills,
-            [skillKey]: { name: newSkill.name, icon: 'Star', effect: newSkill.effect, level: 1, exp: 0 }
-          }
-        }
-      }));
-      setNewSkill({ name: '', effect: '' });
-    }
-  };
-
   const addNewCourse = () => {
-    if (newCourse.name && newCourse.totalTasks && newCourse.relatedSkill) {
+    if (newCourse.name && newCourse.skillName && newCourse.skillIcon) {
       setGameState(prev => ({
         ...prev,
         courses: [
@@ -201,13 +180,17 @@ const App: React.FC = () => {
           {
             id: prev.courses.length + 1,
             name: newCourse.name,
-            progress: 0,
-            totalTasks: parseInt(newCourse.totalTasks),
-            relatedSkill: newCourse.relatedSkill
+            relatedSkill: {
+              name: newCourse.skillName,
+              icon: newCourse.skillIcon,
+              effect: `Enhances skills in ${newCourse.name}`,
+              level: 1,
+              exp: 0
+            }
           }
         ]
       }));
-      setNewCourse({ name: '', totalTasks: '', relatedSkill: '' });
+      setNewCourse({ name: '', skillName: '', skillIcon: '' });
     }
   };
 
@@ -293,48 +276,6 @@ const App: React.FC = () => {
             onChange={(e) => setCareerGoal(e.target.value)}
             sx={{ marginTop: 1 }}
           />
-          <Typography sx={{ marginTop: 2 }}><strong>Skills:</strong></Typography>
-          {Object.entries(gameState.player.skills).map(([key, skill]) => {
-            const IconComponent = iconMap[skill.icon] || Star;
-            return (
-              <div key={key} style={{ display: 'flex', alignItems: 'center', marginTop: '0.5rem' }}>
-                <IconComponent size={16} style={{ marginRight: '0.5rem' }} />
-                <Typography>{skill.name} - Level {skill.level}</Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={(skill.exp % 50) * 2} 
-                  sx={{ width: '100px', marginLeft: '0.5rem' }} 
-                />
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      <Card sx={{ marginBottom: 2 }}>
-        <CardHeader title="Add New Skill" />
-        <CardContent>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={5}>
-              <TextField 
-                fullWidth
-                placeholder="Skill Name" 
-                value={newSkill.name}
-                onChange={(e) => setNewSkill({...newSkill, name: e.target.value})}
-              />
-            </Grid>
-            <Grid item xs={12} sm={5}>
-              <TextField 
-                fullWidth
-                placeholder="Skill Effect" 
-                value={newSkill.effect}
-                onChange={(e) => setNewSkill({...newSkill, effect: e.target.value})}
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <Button onClick={addNewSkill} variant="contained" fullWidth>Add Skill</Button>
-            </Grid>
-          </Grid>
         </CardContent>
       </Card>
 
@@ -342,7 +283,7 @@ const App: React.FC = () => {
         <CardHeader title="Add New Course" />
         <CardContent>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={4}>
               <TextField 
                 fullWidth
                 placeholder="Course Name" 
@@ -350,32 +291,31 @@ const App: React.FC = () => {
                 onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={4}>
               <TextField 
                 fullWidth
-                placeholder="Total Tasks" 
-                type="number"
-                value={newCourse.totalTasks}
-                onChange={(e) => setNewCourse({...newCourse, totalTasks: e.target.value})}
+                placeholder="Skill Name" 
+                value={newCourse.skillName}
+                onChange={(e) => setNewCourse({...newCourse, skillName: e.target.value})}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <Select
                 fullWidth
-                value={newCourse.relatedSkill}
-                onChange={(e) => setNewCourse({...newCourse, relatedSkill: e.target.value as string})}
+                value={newCourse.skillIcon}
+                onChange={(e) => setNewCourse({...newCourse, skillIcon: e.target.value as string})}
                 displayEmpty
               >
-                <MenuItem value="" disabled>Related Skill</MenuItem>
-                {Object.keys(gameState.player.skills).map(skillKey => (
-                  <MenuItem key={skillKey} value={skillKey}>
-                    {gameState.player.skills[skillKey].name}
+                <MenuItem value="" disabled>Skill Icon</MenuItem>
+                {Object.keys(iconMap).map(icon => (
+                  <MenuItem key={icon} value={icon}>
+                    {icon}
                   </MenuItem>
                 ))}
               </Select>
             </Grid>
-            <Grid item xs={12} sm={2}>
-              <Button onClick={addNewCourse} variant="contained" fullWidth>Add Course</Button>
+            <Grid item xs={12} sm={1}>
+              <Button onClick={addNewCourse} variant="contained" fullWidth>Add</Button>
             </Grid>
           </Grid>
         </CardContent>
@@ -418,7 +358,7 @@ const App: React.FC = () => {
                 <MenuItem value="" disabled>Quest Type</MenuItem>
                 {Object.keys(QuestTypes).map(type => (
                   <MenuItem key={type} value={type}>
-                    {QuestTypes[type].name}
+                    {QuestTypes[type as keyof typeof QuestTypes].name}
                   </MenuItem>
                 ))}
               </Select>
@@ -431,49 +371,71 @@ const App: React.FC = () => {
       </Card>
 
       <Grid container spacing={2}>
-        {gameState.courses.map(course => (
-          <Grid item xs={12} sm={6} md={4} key={course.id}>
-            <Card>
-              <CardHeader
-                title={
-                  <Typography variant="h6">
-                    <Book style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    {course.name}
-                  </Typography>
-                }
-              />
-              <CardContent>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={(course.progress / course.totalTasks) * 100} 
-                  sx={{ marginBottom: 1 }} 
+        {gameState.courses.map(course => {
+          const progress = calculateProgress(course, gameState.quests);
+          return (
+            <Grid item xs={12} sm={6} md={4} key={course.id}>
+              <Card>
+                <CardHeader
+                  title={
+                    <Typography variant="h6">
+                      <Book style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                      {course.name}
+                    </Typography>
+                  }
+                  action={
+                    <IconButton onClick={() => deleteCourse(course.id)}>
+                      <Delete />
+                    </IconButton>
+                  }
                 />
-                <Typography>Progress: {course.progress} / {course.totalTasks}</Typography>
-                <Typography sx={{ marginTop: 2, marginBottom: 1 }}><strong>Quests:</strong></Typography>
-                {gameState.quests
-                  .filter(quest => quest.courseId === course.id)
-                  .map(quest => {
-                    const IconComponent = iconMap[quest.type.icon] || Star;
-                    return (
-                      <div key={quest.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <IconComponent size={16} style={{ marginRight: '0.5rem' }} />
-                        <Typography variant="body2" style={{ flexGrow: 1 }}>{quest.name}</Typography>
-                        <Typography variant="body2" style={{ marginRight: '0.5rem' }}>({quest.reward} EXP)</Typography>
-                        <Button 
-                          onClick={() => completeQuest(quest.id)} 
-                          disabled={quest.completed}
-                          size="small"
-                          variant="outlined"
-                        >
-                          {quest.completed ? 'Completed' : 'Complete'}
-                        </Button>
-                      </div>
-                    );
-                  })}
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                <CardContent>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(progress.current / progress.total) * 100} 
+                    sx={{ marginBottom: 1 }} 
+                  />
+                  <Typography>Progress: {progress.current} / {progress.total}</Typography>
+                  
+                  <Typography sx={{ marginTop: 2 }}><strong>Skill:</strong></Typography>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                    {iconMap[course.relatedSkill.icon] && React.createElement(iconMap[course.relatedSkill.icon], { size: 16, style: { marginRight: '0.5rem' } })}
+                    <Typography>{course.relatedSkill.name} - Level {course.relatedSkill.level}</Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(course.relatedSkill.exp % 50) * 2} 
+                      sx={{ width: '100px', marginLeft: '0.5rem' }} 
+                    />
+                  </div>
+
+                  <Typography sx={{ marginTop: 2, marginBottom: 1 }}><strong>Quests:</strong></Typography>
+                  {gameState.quests
+                    .filter(quest => quest.courseId === course.id)
+                    .map(quest => {
+                      const IconComponent = iconMap[quest.type.icon] || Star;
+                      return (
+                        <div key={quest.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <IconComponent size={16} style={{ marginRight: '0.5rem' }} />
+                          <Typography variant="body2" style={{ flexGrow: 1 }}>{quest.name}</Typography>
+                          <Typography variant="body2" style={{ marginRight: '0.5rem' }}>({quest.reward} EXP)</Typography>
+                          <Button
+                            onClick={() => toggleQuestCompletion(quest.id)}
+                            size="small"
+                            variant={quest.completed ? "contained" : "outlined"}
+                          >
+                            {quest.completed ? 'Completed' : 'Complete'}
+                          </Button>
+                          <IconButton onClick={() => deleteQuest(quest.id)} size="small">
+                            <Delete />
+                          </IconButton>
+                        </div>
+                      );
+                    })}
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
     </div>
   );
