@@ -1,46 +1,50 @@
-# Getting Started with Create React App
+# Coursework RPG Web App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Description
 
-## Available Scripts
+Coursework RPG is an interactive web application that gamifies the coursework experience. It allows students to track their progress in different courses, complete quests (assignments, midterms, finals), and level up their skills in a fun, RPG-style interface.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- Track progress across multiple courses
+- Add custom courses with associated skills
+- Create and manage quests (assignments, midterms, finals) for each course
+- Level up skills by completing quests
+- Toggle quest completion status
+- Delete individual quests or entire courses
+- Export and import progress data
+- Set and track career goals
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Usage
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. **Add a Course**: Use the "Add New Course" section to create a new course with an associated skill.
 
-### `npm test`
+2. **Add Quests**: Use the "Add New Quest" section to add quests (assignments, midterms, finals) to existing courses.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3. **Complete Quests**: Click the "Complete" button next to a quest to mark it as completed and gain experience points.
 
-### `npm run build`
+4. **Level Up Skills**: As you complete quests, your course-specific skills will level up automatically.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+5. **Track Progress**: View your overall progress and individual course progress on the main dashboard.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+6. **Manage Data**: Use the "Export Data" and "Import Data" buttons to save or load your progress.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Technologies Used
 
-### `npm run eject`
+- React
+- TypeScript
+- Material-UI
+- Lucide React (for icons)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Contributing
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## License
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-## Learn More
+## Acknowledgments
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Thanks to all contributors who have helped shape this project.
+- Inspired by RPG games and the desire to make coursework more engaging.
