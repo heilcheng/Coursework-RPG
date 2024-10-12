@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/Coursework-RPG/static/css/main.e6c13ad2.css",
-    "main.js": "/Coursework-RPG/static/js/main.261f09fa.js",
+    "main.js": "/Coursework-RPG/static/js/main.8392c24f.js",
     "static/js/453.81c85a90.chunk.js": "/Coursework-RPG/static/js/453.81c85a90.chunk.js",
     "index.html": "/Coursework-RPG/index.html",
     "main.e6c13ad2.css.map": "/Coursework-RPG/static/css/main.e6c13ad2.css.map",
-    "main.261f09fa.js.map": "/Coursework-RPG/static/js/main.261f09fa.js.map",
+    "main.8392c24f.js.map": "/Coursework-RPG/static/js/main.8392c24f.js.map",
     "453.81c85a90.chunk.js.map": "/Coursework-RPG/static/js/453.81c85a90.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.261f09fa.js"
+    "static/js/main.8392c24f.js"
   ]
 }
